@@ -139,22 +139,40 @@ docker compose down -v && docker compose up -d && cd backend && npm run setup
 **Swapping local storage for S3:** only `backend/src/storage/index.js` touches the disk. Implement the same four methods (`save`, `saveBuffer`, `open`, `remove`) with the AWS SDK and export that instead - no route changes.
 
 ## 8. Run the project using following commands
-git clone 
-cd 
+git clone https://github.com/siddisathvik1910-hub/Data-Harbor
+
+cd Data-Habor
+
 ##Docker setup:
+
 $env:DB_PORT = '5433'
+
 docker compose up -d
+
 ##Backend setup
+
 cd backend
+
 npm ci
+
 npm run setup
+
 npm run dev
+
 ##Admin portal
+
 cd admin-portal
+
 npm install
+
 npm run dev
+
 ##User portal
+
 cd user-portal
+
 npm ci
+
 $env:VITE_API_URL = 'http://localhost:4000/api'
+
 npm run dev
