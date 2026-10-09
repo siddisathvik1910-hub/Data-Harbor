@@ -1,0 +1,23 @@
+# Local PostgreSQL for development.   Start with:  docker compose up -d
+# Credentials match backend/.env.example
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dataset_platform_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dataset_platform
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - dataset_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dataset_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  dataset_pgdata:

@@ -1,0 +1,130 @@
+// Dataset Sharing Platform - Prisma schema (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum DatasetStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  DATASET_APPROVED
+  DATASET_REJECTED
+  ACCESS_REQUEST_RECEIVED
+  ACCESS_REQUEST_APPROVED
+  ACCESS_REQUEST_REJECTED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(USER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  datasets       Dataset[]
+  accessRequests AccessRequest[]
+  notifications  Notification[]
+
+  @@index([role, status])
+  @@index([createdAt])
+}
+
+model Dataset {
+  id              String        @id @default(cuid())
+  title           String
+  description     String        @db.Text
+  category        String
+  tags            String[]
+  status          DatasetStatus @default(PENDING)
+  visibility      Visibility    @default(PUBLIC)
+
+  // Original filename shown to users, and the opaque storage key (never a public URL)
+  fileName        String
+  filePath        String
+  fileSize        Int
+  fileType        String
+
+  rejectionReason String?
+  downloadCount   Int           @default(0)
+  reviewedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  accessRequests AccessRequest[]
+
+  @@index([status, createdAt])
+  @@index([ownerId, status])
+  @@index([category])
+  @@index([visibility])
+  @@index([tags], type: Gin)
+}
+
+model AccessRequest {
+  id           String        @id @default(cuid())
+  status       RequestStatus @default(PENDING)
+  message      String?
+  responseNote String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  respondedAt  DateTime?
+
+  datasetId   String
+  dataset     Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User    @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, status])
+  @@index([requesterId, status])
+  @@index([datasetId, requesterId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
